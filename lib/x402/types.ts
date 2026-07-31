@@ -28,4 +28,5 @@ export interface X402Challenge {
     mimeType: string;
   };
   accepts: X402AcceptRequirement[];
+  error?: string;
 }

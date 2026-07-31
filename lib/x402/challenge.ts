@@ -20,6 +20,7 @@ export const TOOL_PRICES_HUMAN: Record<string, string> = {
 export function createChallenge(toolName: string): X402Challenge {
   const cfg = getX402Config();
   const atomicAmount = TOOL_PRICES_ATOMIC[toolName] || "5000";
+  const humanAmount = TOOL_PRICES_HUMAN[toolName] || "0.005 USDT0";
 
   const acceptReq: X402AcceptRequirement = {
     scheme: "exact",
@@ -42,11 +43,13 @@ export function createChallenge(toolName: string): X402Challenge {
       mimeType: "application/json",
     },
     accepts: [acceptReq],
+    error: `Payment Required for tool '${toolName}'. Costs ${humanAmount}.`,
   };
 }
 
 export function encodeChallengeToBase64(challenge: X402Challenge): string {
-  return Buffer.from(JSON.stringify(challenge)).toString("base64");
+  const { error, ...headerChallenge } = challenge;
+  return Buffer.from(JSON.stringify(headerChallenge)).toString("base64");
 }
 
 export function getX402DiscoveryCatalog() {
