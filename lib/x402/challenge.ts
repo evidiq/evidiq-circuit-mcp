@@ -55,23 +55,38 @@ export function encodeChallengeToBase64(challenge: X402Challenge): string {
 export function getX402DiscoveryCatalog() {
   const cfg = getX402Config();
   return {
-    service: "EVIDIQ Circuit MCP",
     x402Version: 2,
-    network: cfg.chain,
-    asset: cfg.asset,
-    payTo: cfg.payTo,
-    pricing: Object.entries(TOOL_PRICES_ATOMIC).map(([tool, atomic]) => ({
-      tool,
-      atomicAmount: atomic,
-      humanAmount: TOOL_PRICES_HUMAN[tool],
-    })),
-    freeTools: [
-      "circuit_capabilities",
-      "validate_request_params",
-      "estimate_cost",
-      "verify_circuit_report",
-      "get_artifact",
+    resource: {
+      url: `${cfg.publicBaseUrl}/mcp`,
+      description: "EVIDIQ Circuit — verifiable API proxy, TLS attestation, & circuit breaker guard for autonomous AI agents. Free tools (circuit_capabilities, validate_request_params, estimate_cost, verify_circuit_report, get_artifact) remain free.",
+      mimeType: "application/json",
+    },
+    accepts: [
+      {
+        scheme: "exact",
+        network: cfg.chain,
+        asset: cfg.asset,
+        amount: "5000",
+        payTo: cfg.payTo,
+        maxTimeoutSeconds: 300,
+        extra: {
+          name: cfg.domainName,
+          version: cfg.domainVersion,
+        },
+      },
     ],
-    guidance: "Include PAYMENT-SIGNATURE header for paid tool calls.",
+    pricing: [
+      { tool: "audit_endpoint_compliance", amount: "5000", usd: 0.005 },
+      { tool: "inspect_payload_schema", amount: "10000", usd: 0.01 },
+      { tool: "enforce_circuit_breaker", amount: "15000", usd: 0.015 },
+      { tool: "verify_webhook_signature", amount: "20000", usd: 0.02 },
+      { tool: "attest_exchange_receipt", amount: "30000", usd: 0.03 },
+      { tool: "circuit_capabilities", amount: "0", usd: 0, free: true },
+      { tool: "validate_request_params", amount: "0", usd: 0, free: true },
+      { tool: "estimate_cost", amount: "0", usd: 0, free: true },
+      { tool: "verify_circuit_report", amount: "0", usd: 0, free: true },
+      { tool: "get_artifact", amount: "0", usd: 0, free: true },
+    ],
+    guidance: "Before paying, call the free validate_request_params tool first; circuit_capabilities and estimate_cost are also free.",
   };
 }
