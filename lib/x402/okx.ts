@@ -6,6 +6,7 @@ import { getX402Config } from "./config.js";
 import { TOOL_PRICES_ATOMIC } from "./challenge.js";
 
 let serverInstance: x402ResourceServer | null = null;
+let serverInitPromise: Promise<void> | null = null;
 let okxClientInstance: OKXFacilitatorClient | null = null;
 
 export function getOkxFacilitatorClient(): OKXFacilitatorClient | null {
@@ -39,6 +40,18 @@ export function getResourceServer(): x402ResourceServer | null {
   return serverInstance;
 }
 
+async function ensureServerInitialized(
+  server: x402ResourceServer
+): Promise<void> {
+  if (!serverInitPromise) {
+    serverInitPromise = server.initialize().catch((err) => {
+      serverInitPromise = null;
+      throw err;
+    });
+  }
+  return serverInitPromise;
+}
+
 export async function verifyAndSettlePayment(
   paymentHeaderBase64: string,
   toolName: string
@@ -48,6 +61,7 @@ export async function verifyAndSettlePayment(
     if (!server) {
       return { success: false, error: "OKX Facilitator client not configured" };
     }
+    await ensureServerInitialized(server);
 
     const cfg = getX402Config();
     const atomicAmount = TOOL_PRICES_ATOMIC[toolName] || "5000";
@@ -83,27 +97,33 @@ export async function verifyAndSettlePayment(
         txHash: settleResult.transaction,
       };
     } else if (settleResult.status === "timeout" || settleResult.status === "pending") {
-      // Per EVIDIQ-X402-RUNBOOK §9: poll getSettleStatus on timeout/pending if tx hash exists
+      // Per EVIDIQ-X402-RUNBOOK §9: poll getSettleStatus on timeout/pending if tx hash exists.
+      // NEVER report success from a timeout without a confirmed status.
       const txHash = settleResult.transaction;
-      if (txHash) {
-        const client = getOkxFacilitatorClient();
-        if (client) {
-          const deadline = Date.now() + 24000;
-          while (Date.now() < deadline) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            try {
-              const statusRes = await client.getSettleStatus(txHash);
-              if (statusRes && (statusRes.status === "success" || statusRes.success === true)) {
-                return { success: true, txHash };
-              }
-            } catch (err) {
-              // ignore transient error during status poll
-            }
-          }
-        }
-        return { success: true, txHash };
+      if (!txHash) {
+        return { success: false, error: `Settlement ${settleResult.status} without transaction hash` };
       }
-      return { success: false, error: `Settlement status: ${settleResult.status}` };
+      const client = getOkxFacilitatorClient();
+      if (!client || typeof client.getSettleStatus !== "function") {
+        return { success: false, error: `Settlement ${settleResult.status}; cannot poll settle status` };
+      }
+      const deadline = Date.now() + 24000;
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        try {
+          const statusRes = await client.getSettleStatus(txHash);
+          if (statusRes && (statusRes.status === "success" || statusRes.success === true)) {
+            return { success: true, txHash };
+          }
+          if (statusRes && (statusRes.status === "failed" || statusRes.success === false)) {
+            return { success: false, error: `Settlement failed on-chain (tx ${txHash})` };
+          }
+        } catch (err) {
+          // ignore transient error during status poll
+        }
+      }
+      // Timeout/pending must return failure (runbook: "timeout must return failure").
+      return { success: false, error: `Settlement not confirmed within 24s (tx ${txHash}); retry with the same authorization` };
     } else {
       return { success: false, error: `Settlement failed: ${settleResult.errorReason || settleResult.status}` };
     }
