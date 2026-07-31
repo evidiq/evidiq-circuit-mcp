@@ -26,6 +26,7 @@
   <a href="https://www.oklink.com/xlayer"><img src="https://img.shields.io/badge/X%20Layer-USDT0-3CCF4E?style=flat-square" alt="X Layer USDT0" /></a>
   <a href="https://mcp.evidiq.dev/circuit/x402"><img src="https://img.shields.io/badge/x402-0.005%E2%80%930.03%20USDT0-2563EB?style=flat-square" alt="x402: 0.005 to 0.03 USDT0" /></a>
   <a href="https://web3.okx.com/onchainos/dev-docs/payments/service-seller-sdk"><img src="https://img.shields.io/badge/Payments-Official%20OKX%20SDK-121212?style=flat-square&logo=okx&logoColor=white" alt="Official OKX Payment SDK" /></a>
+  <a href="https://www.okx.ai/agents/10377"><img src="https://img.shields.io/badge/OKX.AI-Agent%20%2310377%20Under%20Review-121212?style=flat-square&logo=okx&logoColor=white" alt="OKX.AI Agent 10377 listed" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-3DA639?style=flat-square" alt="License: MIT" /></a>
 </p>
 
@@ -35,6 +36,8 @@ External API dependencies and webhook interactions represent critical single-poi
 
 **EVIDIQ Circuit is the verifiable API proxy and circuit breaker gate for autonomous agents.**  
 Pass it outbound API endpoint targets, payload responses, circuit threshold rules, or incoming webhook signatures. It executes a 9-step evaluation pipeline — validating TLS certificate compliance, schema structural drift, circuit breaker state machine status (`CLOSED`, `HALF_OPEN`, `OPEN`), HMAC/EIP-191 webhook signatures, and generating 0G-anchored EIP-191 attestations.
+
+> **Launch status: live endpoint.** The MCP server is deployed at `https://mcp.evidiq.dev/circuit/mcp`, paid calls settle through the official OKX Payment SDK, and the OKX.AI listing (**Agent #10377**) is submitted and under review.
 
 **Circuit proxy operations are non-custodial and cryptographically signed.**
 
@@ -140,6 +143,20 @@ Settlement happens **before** a paid tool runs, so preflight for free first:
 - It **does** prove that an API exchange, TLS certificate, or circuit breaker evaluation produced a canonical digest and verdict under deterministic rules.
 - It **does** produce an EIP-191 signature signed by Circuit's trusted key (`CIRCUIT_SIGNER_PRIVATE_KEY`), anchorable on 0G storage.
 - It **does not** guarantee third-party uptime or API service SLAs outside the evaluated timeframe.
+
+---
+
+## OKX.AI Marketplace Registration
+
+| Property | Value |
+| :--- | :--- |
+| **Agent ID** | `#10377` |
+| **Agent Name** | `EVIDIQ Circuit` |
+| **Listing Status** | `Listing under review` |
+| **Registration Tx** | [`0xa816ddb702a29c71d19c11ed389dfe47bcf3b2f66066acdaabcca549478fc39b`](https://www.oklink.com/xlayer/tx/0xa816ddb702a29c71d19c11ed389dfe47bcf3b2f66066acdaabcca549478fc39b) |
+| **OKX Agent URL** | [https://www.okx.ai/agents/10377](https://www.okx.ai/agents/10377) |
+| **Communication Addr** | `0x718C74EBd2c191aaC726e64B22155D61E99b1Ec7` |
+| **Services Registered** | 10 Services (5 Gated: $0.005–$0.03, 5 Ungated: $0.00) |
 
 ---
 
