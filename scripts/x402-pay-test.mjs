@@ -2,7 +2,11 @@ import { x402Client } from "@okxweb3/x402-core/client";
 import { registerExactEvmScheme } from "@okxweb3/x402-evm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
 
-const TEST_PRIVATE_KEY = process.env.X402_SETTLE_KEY || "REDACTED-LEAKED-KEY-PURGED";
+const TEST_PRIVATE_KEY = process.env.X402_SETTLE_KEY;
+if (!TEST_PRIVATE_KEY) {
+  console.error("Missing required X402_SETTLE_KEY environment variable.");
+  process.exit(1);
+}
 const TARGET_URL = process.env.TARGET_URL || "https://mcp.evidiq.dev/circuit/mcp";
 const TOOL_NAME = process.env.TOOL_NAME || "audit_endpoint_compliance";
 
