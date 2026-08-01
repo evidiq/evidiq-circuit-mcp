@@ -160,6 +160,48 @@ Settlement happens **before** a paid tool runs, so preflight for free first:
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+    agent["<b>AI agent</b><br/>MCP client"]
+    request{"Tool call<br/>free or paid?"}
+    agent -->|POST /circuit/mcp| request
+
+    free["Free preflight<br/>capabilities · validate_request_params<br/>estimate · verify · get_artifact"]
+    gate["x402 v2 gate<br/>EIP-3009 exact · pay per API audit"]
+    xlayer[("X Layer<br/>USD₮0 · eip155:196")]
+    request -->|free helper| free
+    request -->|paid API audit| gate
+    gate -. verify and settle .-> xlayer
+
+    subgraph circuit["EVIDIQ Circuit trust boundary"]
+        direction TB
+        auditor["1. TLS & header auditor<br/>certificate · SLA · CORS · security headers"]
+        schema["2. Schema drift inspector<br/>JSON Schema validation · type mutation"]
+        breaker["3. Circuit breaker engine<br/>CLOSED · HALF_OPEN · OPEN state machine"]
+        webhook["4. Webhook verifier<br/>HMAC-SHA256 · EIP-191 · replay window"]
+        report["5. Canonical report<br/>SHA-256 digest · EIP-191 signature · 0G anchor"]
+        auditor --> schema --> breaker --> webhook --> report
+    end
+
+    free --> auditor
+    gate --> auditor
+
+    response["<b>MCP response</b><br/>verdict + trace + attestation"]
+    report --> response
+
+    classDef client fill:#312e81,stroke:#a78bfa,color:#ffffff,stroke-width:2px;
+    classDef payment fill:#052e16,stroke:#4ade80,color:#ffffff,stroke-width:2px;
+    classDef core fill:#0f172a,stroke:#38bdf8,color:#ffffff,stroke-width:2px;
+    classDef output fill:#4c1d95,stroke:#c4b5fd,color:#ffffff,stroke-width:2px;
+    class agent,request client;
+    class free,gate,xlayer payment;
+    class auditor,schema,breaker,webhook,report core;
+    class response output;
+    style circuit fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:2px;
+```
+
 ## License
 
 EVIDIQ owns and licenses its original Circuit code under MIT. Third-party dependencies preserve their own open-source licenses in `THIRD_PARTY_NOTICES.md`.
