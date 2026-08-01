@@ -145,3 +145,15 @@ httpServer.listen(PORT, HOST, () => {
   console.log(`EVIDIQ Circuit MCP server listening at http://${HOST}:${PORT}`);
   console.log(`Endpoints: /health, /x402, /skill.md, /mcp`);
 });
+
+// A single malformed request must never take the endpoint down. An empty POST body
+// threw `Unexpected end of JSON input` from inside the MCP transport, killed the
+// process, and left Traefik answering 502 — which OKX reads as an agent that does not
+// respond. Log loudly and keep serving: the request is already lost, the service
+// should not be.
+process.on("unhandledRejection", (reason) => {
+  console.error("[evidiq-circuit-mcp] unhandled rejection — staying up:", reason);
+});
+process.on("uncaughtException", (error) => {
+  console.error("[evidiq-circuit-mcp] uncaught exception — staying up:", error);
+});

@@ -164,8 +164,15 @@ export async function createCircuitReport(params: {
     timestamp,
   };
 
-  // Signer account setup (ensure 0x prefix)
-  let rawPk = params.signerPrivateKey || process.env.CIRCUIT_SIGNER_PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  // Signer account setup (ensure 0x prefix).
+  // No fallback key: an unset signer must fail loudly, never sign with a
+  // publicly known development key.
+  let rawPk = params.signerPrivateKey || process.env.CIRCUIT_SIGNER_PRIVATE_KEY;
+  if (!rawPk) {
+    throw new Error(
+      "CIRCUIT_SIGNER_PRIVATE_KEY is not configured; refusing to sign a Circuit report."
+    );
+  }
   if (!rawPk.startsWith("0x")) {
     rawPk = `0x${rawPk}`;
   }

@@ -308,12 +308,23 @@ export const handler = createMcpHandler(
         title: "Validate target URL format and parameters",
         description: "Validate target URL format, headers, and schema structures without executing or paying. Free.",
         inputSchema: {
-          targetUrl: z.string().describe("Target URL to validate"),
+          targetUrl: z.string().optional().describe("Target URL to validate"),
           headers: z.record(z.string()).optional(),
           expectedSchema: z.record(z.any()).optional(),
         },
       },
       async ({ targetUrl }) => {
+        if (!targetUrl) {
+          return textResult({
+            valid: false,
+            usage: "Pass targetUrl to validate a URL, optional headers and expectedSchema.",
+            example: { targetUrl: "https://api.example.com/v1/quote" },
+            checks: ["url_format", "headers_shape", "expected_schema_shape"],
+            free: true,
+            message: "No targetUrl supplied. This tool is free; call it again with a targetUrl to validate.",
+          });
+        }
+
         let validUrl = true;
         let urlError = "";
         try {
